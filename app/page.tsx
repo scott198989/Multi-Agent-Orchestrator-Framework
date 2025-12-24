@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Info, RotateCcw, Github, Zap } from 'lucide-react';
 import { ProblemInput } from '@/components/ProblemInput';
@@ -8,36 +8,18 @@ import { WorkflowVisualizer } from '@/components/WorkflowVisualizer';
 import { SynthesisPanel } from '@/components/SynthesisPanel';
 import { TokenCounter } from '@/components/TokenCounter';
 import { HowItWorks } from '@/components/HowItWorks';
-import { RateLimitGate, UsageIndicator } from '@/components/RateLimitGate';
 import { useOrchestration } from '@/hooks/useOrchestration';
 
-const MAX_FREE_RUNS = 3;
-
 export default function Home() {
-  const { state, streamingContent, synthesisContent, orchestrate, reset, getUsageCount } = useOrchestration();
+  const { state, streamingContent, synthesisContent, orchestrate, reset } = useOrchestration();
   const [showHowItWorks, setShowHowItWorks] = useState(false);
-  const [usageCount, setUsageCount] = useState(0);
-  const [showRateLimit, setShowRateLimit] = useState(false);
-
-  useEffect(() => {
-    setUsageCount(getUsageCount());
-  }, [getUsageCount]);
 
   const handleSubmit = (problem: string) => {
-    if (usageCount >= MAX_FREE_RUNS) {
-      setShowRateLimit(true);
-      return;
-    }
     orchestrate(problem);
-    setUsageCount(prev => prev + 1);
   };
 
   const handleReset = () => {
     reset();
-  };
-
-  const handleRequestDemo = () => {
-    window.open('mailto:demo@example.com?subject=Multi-Agent%20Orchestrator%20Demo%20Request', '_blank');
   };
 
   const isProcessing = ['analyzing', 'routing', 'consulting', 'synthesizing'].includes(state.status);
@@ -60,10 +42,6 @@ export default function Home() {
             </div>
 
             <div className="flex items-center gap-4">
-              <div className="hidden sm:block w-32">
-                <UsageIndicator usageCount={usageCount} maxFreeRuns={MAX_FREE_RUNS} />
-              </div>
-
               <button
                 onClick={() => setShowHowItWorks(true)}
                 className="px-3 py-2 text-sm text-zinc-400 hover:text-white
@@ -152,7 +130,6 @@ export default function Home() {
               <ProblemInput
                 onSubmit={handleSubmit}
                 isLoading={isProcessing}
-                disabled={usageCount >= MAX_FREE_RUNS}
               />
             </motion.div>
           )}
@@ -212,15 +189,6 @@ export default function Home() {
 
       {/* How It Works Modal */}
       <HowItWorks isOpen={showHowItWorks} onClose={() => setShowHowItWorks(false)} />
-
-      {/* Rate Limit Gate */}
-      {showRateLimit && (
-        <RateLimitGate
-          usageCount={usageCount}
-          maxFreeRuns={MAX_FREE_RUNS}
-          onRequestDemo={handleRequestDemo}
-        />
-      )}
 
       {/* Footer */}
       <footer className="border-t border-[#1f1f2e] mt-16">
